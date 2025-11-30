@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Team Generator — Video Editing Training | KITE KASARAGOD</title>
+  <style>
+    /* Simple reset */
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Roboto,system-ui,-apple-system, 'Helvetica Neue', Arial}
+    body{background:linear-gradient(135deg,#071426 0%, #07121b 50%, #02060a 100%);color:#e6eef6;display:flex;align-items:center;justify-content:center;padding:28px}
+
+    .container{width:100%;max-width:1200px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 14px 50px rgba(2,6,23,0.75)}
+
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:68px;height:68px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0ea5a4,#6d28d9);box-shadow:0 6px 26px rgba(13,25,40,0.6);overflow:hidden}
+    .logo img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.03);filter:drop-shadow(0 6px 18px rgba(0,0,0,0.45))}
+    h1{margin:0;font-size:18px}
+    .sub{font-size:12px;opacity:.9}
+
+    .grid{display:grid;grid-template-columns:1fr 460px;gap:18px;margin-top:16px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+
+    textarea{width:100%;min-height:260px;padding:12px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.04);color:inherit;resize:vertical}
+    label{font-size:13px;display:block;margin-bottom:6px}
+
+    .controls{display:flex;gap:8px;align-items:center;margin-top:10px}
+    input[type=number]{width:110px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .btn{padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+    .btn-primary{background:linear-gradient(90deg,#06b6d4,#7c3aed);color:#051124}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+    .btn-danger{background:linear-gradient(90deg,#ef4444,#f97316);color:white}
+
+    .group-wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}
+    .group{padding:14px;border-radius:12px;min-height:120px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.03);position:relative;overflow:hidden;opacity:0;transform:translateY(18px) scale(.98)}
+    .group h3{margin:0 0 8px 0;font-size:15px}
+    .members{font-size:13px;line-height:1.5;opacity:0.95}
+
+    .tag{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.02)}
+
+    footer{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:12px;opacity:0.85}
+
+    /* dramatic reveal */
+    .countdown-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(1,2,6,0.55), rgba(2,6,23,0.85));z-index:9998;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .25s}
+    .countdown-overlay.show{opacity:1;pointer-events:auto}
+    .count-number{font-size:120px;font-weight:900;letter-spacing:4px;color:transparent;background:linear-gradient(90deg,#fff,#06b6d4,#7c3aed);-webkit-background-clip:text;background-clip:text;text-shadow:0 10px 40px rgba(0,0,0,0.6)}
+    .subtitle-count{margin-top:8px;font-size:16px;color:rgba(255,255,255,0.9)}
+
+    /* reveal animation for each group */
+    .group.reveal{animation:reveal .7s cubic-bezier(.2,.9,.25,1) forwards}
+    @keyframes reveal{0%{opacity:0;transform:translateY(32px) scale(.98)}60%{transform:translateY(-12px) scale(1.03);opacity:1}100%{transform:none;opacity:1}}
+
+    /* subtle hover */
+    .group:hover{transform:translateY(-6px) scale(1.01);box-shadow:0 18px 40px rgba(3,7,18,0.6)}
+
+    /* more sparkles */
+    .sparkle{position:absolute;right:-30px;top:-30px;width:120px;height:120px;transform:rotate(25deg);opacity:.12}
+    .sparkle:before,.sparkle:after{content:'';position:absolute;border-radius:50%;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(124,58,237,0.6), transparent);width:100%;height:100%;filter:blur(14px)}
+
+    /* confetti pieces */
+    .confetti-piece{position:fixed;z-index:9999;pointer-events:none;width:10px;height:14px;background:var(--c);opacity:0.95;border-radius:2px}
+
+    /* suspense glow around selected */
+    .team-highlight{box-shadow:inset 0 0 40px rgba(124,58,237,0.12), 0 10px 30px rgba(7,10,25,0.6)}
+
+    /* small helper animations */
+    .pop{animation:pop .44s cubic-bezier(.2,.9,.3,1)}
+    @keyframes pop{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.03);opacity:1}100%{transform:scale(1);opacity:1}}
+
+    /* responsive */
+    @media (max-width:980px){.grid{grid-template-columns:1fr;}.group-wrap{grid-template-columns:1fr 1fr}}
+    @media (max-width:560px){.group-wrap{grid-template-columns:1fr}}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo"><img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Kite_logo.jpg" alt="KITE logo" /></div>
+        <div>
+          <h1>KITE KASARAGOD — Video Editing Training</h1>
+          <div class="sub">Team generator — create 5 animated groups with dramatic reveal</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="tag">Developed by MIDHUN TV — MASTER TRAINER</div>
+        <div style="font-size:11px;margin-top:6px;opacity:.85">KITE KASARAGOD</div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <label for="names">Paste participant names (one per line). Supported: 32–40 names — but any number works.</label>
+        <textarea id="names" placeholder="Paste 32–40 names here, each on a new line
+Example:
+Anu
+Biju
+Chitra..." spellcheck="false"></textarea>
+
+        <div class="controls">
+          <div style="display:flex;flex-direction:column">
+            <label for="groups">Number of groups</label>
+            <input id="groups" type="number" min="2" max="10" value="5">
+          </div>
+
+          <div style="flex:1"></div>
+
+          <button class="btn btn-primary" id="generate">Generate Teams</button>
+          <button class="btn btn-ghost" id="shuffle">Shuffle</button>
+          <button class="btn btn-ghost" id="export">Export CSV</button>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <div class="tag">Team name theme: <strong id="themeText">Video Editing Techniques</strong></div>
+          <select id="theme" style="margin-left:6px;padding:6px;border-radius:8px;background:transparent;color:inherit;border:1px solid rgba(255,255,255,0.04)">
+            <option value="tech">Video Editing Techniques</option>
+            <option value="fun">Fun Studio Roles</option>
+            <option value="movie">Movie Crew</option>
+          </select>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <button class="btn btn-danger" id="dramatic">Dramatic Reveal ▶</button>
+          <div style="font-size:12px;opacity:.8">Use Dramatic Reveal for suspenseful group reveal</div>
+        </div>
+
+      </section>
+
+      <aside class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px">Preview — groups</div>
+            <div style="font-size:11px;opacity:.8">Click a group to copy members. Click header to rename.</div>
+          </div>
+          <div>
+            <button class="btn btn-ghost" id="celebrate">Celebrate 🎉</button>
+          </div>
+        </div>
+
+        <div id="groupsContainer" class="group-wrap" style="margin-top:12px;min-height:220px"></div>
+
+        <footer>
+          <div>Tip: Use Shuffle to try different mixes</div>
+          <div>&copy; KITE KASARAGOD</div>
+        </footer>
+      </aside>
+    </main>
+  </div>
+
+  <div id="countdown" class="countdown-overlay" aria-hidden="true">
+    <div style="text-align:center;color:white">
+      <div id="countNum" class="count-number">3</div>
+      <div class="subtitle-count">Revealing teams...</div>
+    </div>
+  </div>
+
+  <script>
+    // Themes for team names
+    const THEMES = {
+      tech: ["Cutters","Transitions","Colorists","Sound Wizards","Motion Makers","Frame Fixers","FX Lab","Edit Suite"],
+      fun: ["Clip Captains","Render Rangers","Frame Friends","Audio Allies","Motion Mavericks","Trim Tribe","Pixel Pals","Preview Posse"],
+      movie: ["Director's Cut","Continuity Crew","Foley Force","Color Graders","VFX Unit","Sound Stage","Editor's Bench","Post House"]
+    };
+
+    const namesEl = document.getElementById('names');
+    const groupsEl = document.getElementById('groups');
+    const generateBtn = document.getElementById('generate');
+    const shuffleBtn = document.getElementById('shuffle');
+    const groupsContainer = document.getElementById('groupsContainer');
+    const exportBtn = document.getElementById('export');
+    const celebrateBtn = document.getElementById('celebrate');
+    const themeSelect = document.getElementById('theme');
+    const themeText = document.getElementById('themeText');
+    const dramaticBtn = document.getElementById('dramatic');
+    const countdown = document.getElementById('countdown');
+    const countNum = document.getElementById('countNum');
+
+    let lastGroups = null; // keep for dramatic reveal
+    let lastNames = [];
+
+    function splitLines(raw){
+      return raw.split(/\n|\r/).map(s=>s.trim()).filter(s=>s.length>0);
+    }
+
+    function shuffle(array){
+      for(let i=array.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [array[i],array[j]]=[array[j],array[i]];
+      }
+    }
+
+    function buildGroups(participants, k){
+      const groups = Array.from({length:k}, ()=>[]);
+      shuffle(participants);
+      for(let i=0;i<participants.length;i++){
+        groups[i%k].push(participants[i]);
+      }
+      return groups;
+    }
+
+    function pickTeamNames(k){
+      const theme = themeSelect.value;
+      const pool = THEMES[theme] || THEMES.tech;
+      const out = [];
+      for(let i=0;i<k;i++){
+        out.push(pool[i % pool.length] + (i<pool.length?"":" " + (i+1)));
+      }
+      return out;
+    }
+
+    function renderImmediate(groupsArr, teamNames){
+      groupsContainer.innerHTML='';
+      groupsArr.forEach((list, idx)=>{
+        const g = document.createElement('div');
+        g.className='group';
+
+        const title = document.createElement('h3');
+        title.contentEditable = true;
+        title.spellcheck = false;
+        title.innerText = teamNames[idx] || ('Team ' + (idx+1));
+        title.title = 'Click to edit team name';
+        title.style.cursor='text';
+        title.addEventListener('click', ()=>{document.execCommand('selectAll',false,null);});
+
+        const members = document.createElement('div');
+        members.className='members';
+        members.innerHTML = list.map(n=>`<div>• ${escapeHtml(n)}</div>`).join('');
+
+        g.appendChild(title);
+        g.appendChild(members);
+
+        // click to copy
+        g.addEventListener('click', (ev)=>{
+          if(ev.target===title) return; // avoid interfering with rename
+          const text = list.join('\n');
+          navigator.clipboard.writeText(text).then(()=>{
+            showToast('Copied ' + list.length + ' names to clipboard');
+          }).catch(()=>{showToast('Copy failed — try manually');});
+        });
+
+        const s = document.createElement('div'); s.className='sparkle'; g.appendChild(s);
+
+        groupsContainer.appendChild(g);
+      });
+    }
+
+    function renderWithReveal(groupsArr, teamNames){
+      // render hidden, then reveal each with delay for suspense
+      groupsContainer.innerHTML='';
+      groupsArr.forEach((list, idx)=>{
+        const g = document.createElement('div'); g.className='group';
+        const title = document.createElement('h3'); title.contentEditable=true; title.innerText=teamNames[idx]||('Team '+(idx+1));
+        const members = document.createElement('div'); members.className='members'; members.innerHTML = list.map(n=>`<div>• ${escapeHtml(n)}</div>`).join('');
+        g.appendChild(title); g.appendChild(members);
+        const s = document.createElement('div'); s.className='sparkle'; g.appendChild(s);
+        groupsContainer.appendChild(g);
+      });
+
+      const nodes = Array.from(groupsContainer.querySelectorAll('.group'));
+      nodes.forEach((n,i)=>{ n.style.opacity=0; n.style.transform='translateY(24px) scale(.98)'; n.classList.remove('reveal'); });
+
+      // stagger reveal — more dramatic order: random but biased
+      const order = nodes.map((_,i)=>i);
+      shuffle(order);
+      order.forEach((idx,i)=>{
+        setTimeout(()=>{
+          const el = nodes[idx]; el.classList.add('reveal'); el.style.opacity=1;
+          // small highlight pulse for the revealed card
+          el.classList.add('team-highlight');
+          setTimeout(()=>el.classList.remove('team-highlight'),900);
+        }, 700 + i*420);
+      });
+    }
+
+    function escapeHtml(s){return s.replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]});}
+
+    function showToast(msg){
+      const t=document.createElement('div');
+      t.innerText=msg; t.style.position='fixed'; t.style.bottom='18px'; t.style.left='50%'; t.style.transform='translateX(-50%)';
+      t.style.background='linear-gradient(90deg, rgba(0,0,0,0.7), rgba(2,6,23,0.6))'; t.style.color='white'; t.style.padding='10px 14px'; t.style.borderRadius='8px'; t.style.zIndex=99999; t.style.fontSize='13px';
+      document.body.appendChild(t);
+      setTimeout(()=>{t.style.transition='all .4s'; t.style.opacity=0; t.style.transform='translateX(-50%) translateY(8px)';},1600);
+      setTimeout(()=>t.remove(),2000);
+    }
+
+    function exportCSV(groupsArr, teamNames){
+      let csv = 'Team,Member\n';
+      groupsArr.forEach((g,idx)=>{
+        g.forEach(m=>{csv += `"${teamNames[idx]}","${m.replace(/"/g,'""')}"\n`;});
+      });
+      const blob = new Blob([csv], {type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download='teams.csv'; a.click(); URL.revokeObjectURL(url);
+    }
+
+    generateBtn.addEventListener('click', ()=>{
+      const raw = namesEl.value;
+      const participants = splitLines(raw);
+      if(participants.length < 2){ showToast('Please paste at least 2 names'); return; }
+      const k = Math.max(2, Math.min(10, parseInt(groupsEl.value)||5));
+      const groupsArr = buildGroups(participants.slice(), k);
+      const teamNames = pickTeamNames(k);
+      lastGroups = groupsArr; lastNames = participants.slice();
+      renderImmediate(groupsArr, teamNames);
+    });
+
+    shuffleBtn.addEventListener('click', ()=>{
+      const raw = namesEl.value;
+      const participants = splitLines(raw);
+      if(participants.length < 2){ showToast('Please paste at least 2 names'); return; }
+      const k = Math.max(2, Math.min(10, parseInt(groupsEl.value)||5));
+      const groupsArr = buildGroups(participants.slice(), k);
+      const teamNames = pickTeamNames(k);
+      lastGroups = groupsArr; lastNames = participants.slice();
+      renderImmediate(groupsArr, teamNames);
+      showToast('Shuffled — new mix');
+    });
+
+    exportBtn.addEventListener('click', ()=>{
+      const nodes = groupsContainer.querySelectorAll('.group');
+      if(nodes.length===0){ showToast('Nothing to export — generate teams first'); return; }
+      const groupsArr = [];
+      const teamNames = [];
+      nodes.forEach(n=>{
+        const t = n.querySelector('h3').innerText.trim();
+        teamNames.push(t);
+        const members = Array.from(n.querySelectorAll('.members div')).map(d=>d.innerText.replace(/^•\s*/,''));
+        groupsArr.push(members);
+      });
+      exportCSV(groupsArr, teamNames);
+    });
+
+    celebrateBtn.addEventListener('click', ()=>{ burstConfetti(); showToast('Team spirit! 🎉'); });
+
+    dramaticBtn.addEventListener('click', ()=>{
+      if(!lastGroups){ showToast('Generate teams first'); return; }
+      startDramaticReveal(lastGroups, pickTeamNames(lastGroups.length));
+    });
+
+    function startDramaticReveal(groupsArr, teamNames){
+      // show countdown
+      countdown.classList.add('show'); countNum.innerText = '3';
+      let c = 3;
+      const iv = setInterval(()=>{ c--; if(c>0){ countNum.innerText = c; } else { clearInterval(iv); countdown.classList.remove('show'); renderWithReveal(groupsArr, teamNames); }} , 900);
+    }
+
+    function burstConfetti(){
+      const colors = ['#06b6d4','#7c3aed','#f97316','#ef4444','#fde68a'];
+      const pieces = 40;
+      for(let i=0;i<pieces;i++){
+        const el = document.createElement('div'); el.className='confetti-piece';
+        el.style.setProperty('--c', colors[i%colors.length]);
+        el.style.background = 'var(--c)';
+        el.style.left = (50 + (Math.random()*600-300)) + 'px';
+        el.style.top = (50 + (Math.random()*400-200)) + 'px';
+        const rot = Math.random()*360; el.style.transform = `translate(-50%,-50%) rotate(${rot}deg)`;
+        document.body.appendChild(el);
+        animateConfetti(el);
+      }
+      setTimeout(()=>{document.querySelectorAll('.confetti-piece').forEach(e=>e.remove());},2600);
+    }
+
+    function animateConfetti(el){
+      const dx = (Math.random()*700-350); const dy = (200 + Math.random()*500);
+      el.animate([ {transform:el.style.transform, opacity:1, top:el.style.top}, {transform: `translate(${dx}px, ${dy}px) rotate(${Math.random()*720}deg)`, opacity:0, top: (parseFloat(el.style.top)+dy)+'px'} ], {duration:1400 + Math.random()*900, easing:'cubic-bezier(.2,.8,.3,1)'});
+    }
+
+    // initial sample for demo
+    namesEl.value = `Paste names here...
+(Example list for testing)
+Amina
+Balu
+Chitra
+Deepak
+Esha
+Faiz
+Gokul
+Hema
+Irfan
+Jaya
+Kiran
+Leela
+Manu
+Neha
+Omar
+Priya
+Qadir
+Riya
+Sajid
+Tina
+Usha
+Vijay
+Wafa
+Xavier
+Yamini
+Zakir`;
+
+    themeSelect.addEventListener('change', ()=>{ themeText.innerText = themeSelect.options[themeSelect.selectedIndex].text; });
+
+    // UX: ctrl+enter in textarea to generate
+    namesEl.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key==='Enter'){ generateBtn.click(); } });
+
+  </script>
+</body>
+</html>
+
