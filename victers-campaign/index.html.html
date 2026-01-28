@@ -2,162 +2,277 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support KITE Victers Campaign</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KITE Victers Campaign Generator</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    
     <style>
-        /* Campaign Branding Colors */
         :root {
-            --primary-green: #4CAF50;
-            --dark-green: #006400;
-            --lime-green: #CDDC39;
+            --primary: #4CAF50;
+            --dark: #006400;
+            --bg: #f4f4f9;
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f0f2f5;
+            font-family: sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
-            margin: 0;
-            text-align: center;
         }
 
         h1 {
-            color: var(--dark-green);
-            font-size: 1.5rem;
-            margin-bottom: 10px;
+            color: var(--dark);
+            font-size: 1.2rem;
+            margin-bottom: 5px;
         }
-
-        .upload-btn-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
+        
+        .instruction {
+            color: #666;
+            font-size: 0.9rem;
             margin-bottom: 20px;
         }
 
-        .btn {
-            border: 2px solid var(--dark-green);
+        /* --- 1. UPLOAD BUTTON STYLING --- */
+        .upload-container {
+            margin-bottom: 20px;
+        }
+
+        .btn-upload {
+            background-color: var(--dark);
             color: white;
-            background-color: var(--dark-green);
-            padding: 10px 25px;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .upload-btn-wrapper input[type=file] {
-            font-size: 100px;
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            cursor: pointer;
+        input[type="file"] { display: none; }
+
+        /* --- 2. EDITOR MODAL (Hidden by default) --- */
+        #editorModal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #222;
+            z-index: 1000;
+            display: none; /* Hidden initially */
+            flex-direction: column;
         }
 
-        /* The Canvas acts as the preview */
-        canvas {
+        /* This container holds both the User Image and the Template Overlay */
+        .crop-workspace {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* The image the user manipulates */
+        #imageToEdit {
             max-width: 100%;
+            display: block;
+        }
+
+        /* THE MAGIC: The Template overlay sits ON TOP of the cropper */
+        /* pointer-events: none allows you to touch 'through' the template to move the photo behind it */
+        .overlay-template {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none; 
+            background-image: url('template.png'); 
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.9; /* Slight transparency to help align, becomes solid on render */
+        }
+
+        .editor-controls {
+            padding: 20px;
+            background: #111;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .btn-cancel { background: #555; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; flex: 1;}
+        .btn-save { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; flex: 1;}
+
+        /* --- 3. FINAL RESULT STYLING --- */
+        #resultContainer {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+
+        #finalCanvas {
+            width: 100%;
             height: auto;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            /* Max height for mobile screens so it fits */
-            max-height: 60vh; 
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
         #downloadBtn {
-            margin-top: 20px;
-            background-color: var(--lime-green);
-            color: var(--dark-green);
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            display: none; /* Hidden until image is generated */
+            display: block;
+            margin-top: 15px;
+            background: #e91e63;
+            color: white;
             text-decoration: none;
+            padding: 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            text-align: center;
         }
 
     </style>
 </head>
 <body>
 
-    <h1>കെറ്റ് വിക്ടേഴ്സ്: നമ്മുടെ അവകാശം<br><span style="font-size:0.8em; color:#555">Campaign Poster Generator</span></h1>
+    <h1>കെറ്റ് വിക്ടേഴ്സ്: നമ്മുടെ അവകാശം</h1>
+    <p class="instruction">Create your campaign poster in seconds.</p>
 
-    <div class="upload-btn-wrapper">
-        <button class="btn">Select Your Photo</button>
-        <input type="file" id="uploadInput" accept="image/*" />
+    <div class="upload-container">
+        <label for="fileInput" class="btn-upload">
+            <span>📷 Select Photo / ഫോട്ടോ ചേർക്കാം</span>
+        </label>
+        <input type="file" id="fileInput" accept="image/*">
     </div>
 
-    <canvas id="posterCanvas"></canvas>
+    <div id="resultContainer">
+        <canvas id="finalCanvas"></canvas>
+        <a id="downloadBtn" download="My_Victers_Poster.png">Download Poster 📥</a>
+        <br>
+        <button onclick="location.reload()" style="background:none; border:none; color:#666; text-decoration:underline;">Create Another / മറ്റൊന്ന് ചെയ്യാം</button>
+    </div>
 
-    <a id="downloadBtn" download="My_Victers_Poster.png">Download Poster 📥</a>
+    <div id="editorModal">
+        <div class="crop-workspace">
+            <img id="imageToEdit" src="">
+            <div class="overlay-template"></div>
+        </div>
+        <div class="editor-controls">
+            <button class="btn-cancel" onclick="closeEditor()">Cancel</button>
+            <button class="btn-save" onclick="generateImage()">✅ Done</button>
+        </div>
+        <div style="color:white; font-size:0.8rem; padding-bottom:10px;">
+            Drag to move • Pinch to zoom (വിരൽ കൊണ്ട് ക്രമീകരിക്കാം)
+        </div>
+    </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script>
-        const canvas = document.getElementById('posterCanvas');
-        const ctx = canvas.getContext('2d');
+        // DOM Elements
+        const fileInput = document.getElementById('fileInput');
+        const editorModal = document.getElementById('editorModal');
+        const imageToEdit = document.getElementById('imageToEdit');
+        const resultContainer = document.getElementById('resultContainer');
+        const finalCanvas = document.getElementById('finalCanvas');
         const downloadBtn = document.getElementById('downloadBtn');
-        const fileInput = document.getElementById('uploadInput');
 
-        // 1. Load the Template Image (Must be a transparent PNG)
-        const templateImage = new Image();
-        templateImage.src = 'template.png'; // Make sure this file exists in the folder
+        let cropper = null;
+        let templateImage = new Image();
         
-        // Wait for template to load to set canvas size
-        templateImage.onload = function() {
-            canvas.width = templateImage.width;
-            canvas.height = templateImage.height;
-            drawPlaceholder(); // Draw template initially
-        };
+        // Load template immediately to get its dimensions
+        templateImage.src = 'template.png'; 
 
-        function drawPlaceholder() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(templateImage, 0, 0);
-        }
-
-        // 2. Handle User Image Upload
-        fileInput.addEventListener('change', function(e) {
+        // 1. Handle File Upload
+        fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const userImg = new Image();
-                userImg.onload = function() {
-                    generatePoster(userImg);
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imageToEdit.src = event.target.result;
+                    openEditor();
                 };
-                userImg.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
+                reader.readAsDataURL(file);
+            }
         });
 
-        // 3. Logic to Merge Images
-        function generatePoster(userImg) {
-            // A. clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // B. Calculate scaling to cover the specific circular area
-            // Note: You might need to tweak these numbers based on your exact template
-            // Let's assume the circle is in the center. 
-            // We draw the user image FIRST (background layer)
+        // 2. Open Editor & Initialize Cropper
+        function openEditor() {
+            editorModal.style.display = 'flex';
             
-            // Simple "Cover" logic to fill the whole background behind the template
-            const scale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
-            const x = (canvas.width / 2) - (userImg.width / 2) * scale;
-            const y = (canvas.height / 2) - (userImg.height / 2) * scale;
-            
-            ctx.drawImage(userImg, x, y, userImg.width * scale, userImg.height * scale);
+            // Wait slightly for image to load in DOM
+            setTimeout(() => {
+                if(cropper) cropper.destroy();
 
-            // C. Draw the Template ON TOP (Foreground layer)
-            ctx.drawImage(templateImage, 0, 0);
+                cropper = new Cropper(imageToEdit, {
+                    // Make the crop box match the template aspect ratio
+                    aspectRatio: templateImage.width / templateImage.height, 
+                    viewMode: 0, // Allow moving image freely
+                    dragMode: 'move', // Allow dragging image immediately
+                    guides: false, // Hide grid
+                    center: false, // Hide center indicator
+                    background: false, // Hide grid background
+                    autoCropArea: 1, // Maximize crop box
+                    cropBoxMovable: false, // Lock the box
+                    cropBoxResizable: false, // Lock the box size
+                    toggleDragModeOnDblclick: false,
+                    ready() {
+                        // Force the crop box to fill the view so it aligns with overlay
+                        this.cropper.setCropBoxData({
+                            left: 0,
+                            top: 0,
+                            width: this.cropper.getContainerData().width,
+                            height: this.cropper.getContainerData().height
+                        });
+                    }
+                });
+            }, 100);
+        }
 
-            // D. Show download button
-            downloadBtn.style.display = "inline-block";
+        // 3. Close Editor
+        function closeEditor() {
+            editorModal.style.display = 'none';
+            fileInput.value = ""; // Reset input
+            if(cropper) cropper.destroy();
+        }
+
+        // 4. Generate Final Image
+        function generateImage() {
+            if (!cropper) return;
+
+            // Get the cropped version of the user's photo
+            // We use the template's dimensions for high quality
+            const userCanvas = cropper.getCroppedCanvas({
+                width: templateImage.width,
+                height: templateImage.height,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            if (!userCanvas) return;
+
+            // Set final canvas size
+            finalCanvas.width = templateImage.width;
+            finalCanvas.height = templateImage.height;
+            const ctx = finalCanvas.getContext('2d');
+
+            // A. Draw User Photo (Background)
+            ctx.drawImage(userCanvas, 0, 0, finalCanvas.width, finalCanvas.height);
+
+            // B. Draw Template (Foreground)
+            ctx.drawImage(templateImage, 0, 0, finalCanvas.width, finalCanvas.height);
+
+            // Show Result
+            editorModal.style.display = 'none';
+            resultContainer.style.display = 'block';
             
-            // Prepare download link
-            downloadBtn.href = canvas.toDataURL('image/png');
+            // Set Download Link
+            downloadBtn.href = finalCanvas.toDataURL('image/png');
         }
     </script>
 </body>
