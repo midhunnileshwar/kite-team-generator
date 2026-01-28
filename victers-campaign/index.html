@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KITE Victers Campaign Poster</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --dark: #006400;
+            --light: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--light);
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h2 { color: var(--dark); margin-bottom: 5px; }
+        p { color: #666; font-size: 0.9rem; margin-top: 0; }
+
+        /* Main Action Area */
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* File Input Styling */
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .file-upload-label {
+            display: inline-block;
+            padding: 12px 30px;
+            background: var(--dark);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .file-upload-label:hover { background: #004d00; }
+        input[type="file"] { display: none; }
+
+        /* Canvas (The Final Result) */
+        #finalCanvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none; /* Hidden until generated */
+        }
+
+        /* Download Button */
+        #downloadBtn {
+            display: none;
+            margin-top: 15px;
+            background: #FF5722;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+        }
+
+        /* --- Cropper Modal Styles --- */
+        #cropperModal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 999;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .crop-container {
+            width: 90%;
+            max-width: 400px;
+            height: 60vh; /* Takes up 60% of screen height */
+            background: #333;
+            margin-bottom: 20px;
+        }
+
+        .crop-container img {
+            max-width: 100%; /* This is required for Cropper.js */
+            display: block;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-crop { background: var(--primary); border: none; padding: 10px 20px; color: white; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        .btn-cancel { background: #f44336; border: none; padding: 10px 20px; color: white; border-radius: 5px; font-size: 16px; cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>കെറ്റ് വിക്ടേഴ്സ്: നമ്മുടെ അവകാശം</h2>
+        <p>Upload your photo to create a support badge.</p>
+
+        <div class="file-upload">
+            <label for="uploadInput" class="file-upload-label">
+                📷 Select Photo / ഫോട്ടോ തിരഞ്ഞെടുക്കൂ
+            </label>
+            <input type="file" id="uploadInput" accept="image/*">
+        </div>
+
+        <canvas id="finalCanvas"></canvas>
+        <br>
+        <a id="downloadBtn" download="Victers_Campaign.png">Download Poster 📥</a>
+    </div>
+
+    <div id="cropperModal">
+        <div class="crop-container">
+            <img id="imageToCrop" src="" alt="Crop Preview">
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-crop" onclick="cropAndGenerate()">Crop & Generate</button>
+        </div>
+        <p style="color:white; margin-top:10px;">Drag to move. Pinch to zoom.</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <script>
+        let cropper;
+        const uploadInput = document.getElementById('uploadInput');
+        const imageToCrop = document.getElementById('imageToCrop');
+        const cropperModal = document.getElementById('cropperModal');
+        const finalCanvas = document.getElementById('finalCanvas');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const ctx = finalCanvas.getContext('2d');
+
+        // Load the template ONCE when page loads
+        const templateImg = new Image();
+        templateImg.src = 'template.png'; // Your Transparent PNG
+
+        // 1. When user uploads a file
+        uploadInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    // Reset inputs
+                    uploadInput.value = ''; 
+                    
+                    // Set image source for cropper
+                    imageToCrop.src = evt.target.result;
+                    
+                    // Show Modal
+                    cropperModal.style.display = 'flex';
+
+                    // Initialize Cropper (Destroy old instance if exists)
+                    if (cropper) cropper.destroy();
+                    
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: 1, // 1:1 Square crop (Perfect for circles)
+                        viewMode: 1,    // Restrict crop box to not exceed image
+                        dragMode: 'move', // Allow moving the image immediately
+                        autoCropArea: 0.8,
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 2. When user clicks "Crop & Generate"
+        function cropAndGenerate() {
+            if (!cropper) return;
+
+            // Get the cropped image data
+            const croppedCanvas = cropper.getCroppedCanvas({
+                width: 600,  // High quality output
+                height: 600
+            });
+
+            // Set main canvas size to match template
+            finalCanvas.width = templateImg.width;
+            finalCanvas.height = templateImg.height;
+
+            // --- DRAWING LOGIC ---
+            
+            // A. Define where the user photo should go on the template
+            // You need to adjust these 3 numbers based on your specific template image!
+            const photoX = 300;     // X coordinate of the circle's center (Example)
+            const photoY = 500;     // Y coordinate of the circle's center (Example)
+            const photoSize = 400;  // Width/Height of the area to fill
+            
+            // Calculate top-left position for drawing
+            const drawX = (finalCanvas.width / 2) - (photoSize / 2); // Centers it horizontally
+            const drawY = (finalCanvas.height / 2) - (100); // Adjust this manually to align with hole
+            
+            // NOTE: The best way to align this is to open your template.png in Paint/Photoshop, 
+            // find the X,Y coordinates of the top-left corner of the transparent box/circle,
+            // and the width of that box.
+            
+            // B. Draw Cropped User Image (Background)
+            // We use the coordinates calculated above
+            // For a center-aligned template hole, we can use a simpler approach:
+            
+            // Let's assume the hole is roughly in the visual center. 
+            // We draw the user image slightly larger to ensure no gaps.
+            const targetSize = 650; // Size of user photo on final poster
+            const targetX = (finalCanvas.width - targetSize) / 2;
+            const targetY = (finalCanvas.height / 2) - (targetSize / 4); // Guessing vertical position
+
+            ctx.drawImage(croppedCanvas, targetX, targetY, targetSize, targetSize);
+
+            // C. Draw Template (Foreground)
+            ctx.drawImage(templateImg, 0, 0);
+
+            // --- FINISH ---
+            
+            // Show result
+            finalCanvas.style.display = 'block';
+            downloadBtn.style.display = 'inline-block';
+            downloadBtn.href = finalCanvas.toDataURL('image/png');
+            
+            // Close modal
+            closeModal();
+        }
+
+        function closeModal() {
+            cropperModal.style.display = 'none';
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        }
+    </script>
+</body>
+</html>

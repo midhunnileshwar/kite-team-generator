@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support KITE Victers Campaign</title>
+    <style>
+        /* Campaign Branding Colors */
+        :root {
+            --primary-green: #4CAF50;
+            --dark-green: #006400;
+            --lime-green: #CDDC39;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--dark-green);
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .upload-btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            border: 2px solid var(--dark-green);
+            color: white;
+            background-color: var(--dark-green);
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .upload-btn-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* The Canvas acts as the preview */
+        canvas {
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            /* Max height for mobile screens so it fits */
+            max-height: 60vh; 
+        }
+
+        #downloadBtn {
+            margin-top: 20px;
+            background-color: var(--lime-green);
+            color: var(--dark-green);
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            display: none; /* Hidden until image is generated */
+            text-decoration: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>കെറ്റ് വിക്ടേഴ്സ്: നമ്മുടെ അവകാശം<br><span style="font-size:0.8em; color:#555">Campaign Poster Generator</span></h1>
+
+    <div class="upload-btn-wrapper">
+        <button class="btn">Select Your Photo</button>
+        <input type="file" id="uploadInput" accept="image/*" />
+    </div>
+
+    <canvas id="posterCanvas"></canvas>
+
+    <a id="downloadBtn" download="My_Victers_Poster.png">Download Poster 📥</a>
+
+    <script>
+        const canvas = document.getElementById('posterCanvas');
+        const ctx = canvas.getContext('2d');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const fileInput = document.getElementById('uploadInput');
+
+        // 1. Load the Template Image (Must be a transparent PNG)
+        const templateImage = new Image();
+        templateImage.src = 'template.png'; // Make sure this file exists in the folder
+        
+        // Wait for template to load to set canvas size
+        templateImage.onload = function() {
+            canvas.width = templateImage.width;
+            canvas.height = templateImage.height;
+            drawPlaceholder(); // Draw template initially
+        };
+
+        function drawPlaceholder() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(templateImage, 0, 0);
+        }
+
+        // 2. Handle User Image Upload
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const userImg = new Image();
+                userImg.onload = function() {
+                    generatePoster(userImg);
+                };
+                userImg.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 3. Logic to Merge Images
+        function generatePoster(userImg) {
+            // A. clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // B. Calculate scaling to cover the specific circular area
+            // Note: You might need to tweak these numbers based on your exact template
+            // Let's assume the circle is in the center. 
+            // We draw the user image FIRST (background layer)
+            
+            // Simple "Cover" logic to fill the whole background behind the template
+            const scale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
+            const x = (canvas.width / 2) - (userImg.width / 2) * scale;
+            const y = (canvas.height / 2) - (userImg.height / 2) * scale;
+            
+            ctx.drawImage(userImg, x, y, userImg.width * scale, userImg.height * scale);
+
+            // C. Draw the Template ON TOP (Foreground layer)
+            ctx.drawImage(templateImage, 0, 0);
+
+            // D. Show download button
+            downloadBtn.style.display = "inline-block";
+            
+            // Prepare download link
+            downloadBtn.href = canvas.toDataURL('image/png');
+        }
+    </script>
+</body>
+</html>
